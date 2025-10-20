@@ -6,8 +6,9 @@ if ($path == "/bestiarium/viewall") {
     foreach ($bestiaires as $bestiaire) {
         $bete = new Bestiarium($bestiaire['name'], $bestiaire['hp'], $bestiaire['damage']);
         $bete->setDescription($bestiaire['description']);
-        echo $bete . "<br>";
+        echo json_encode ($bete->toArray());
     }
+    
 }
 
 ///////////////////// Récupération d'une bête via son ID
@@ -16,7 +17,7 @@ if ($path == "/bestiarium/view") {
     $bestiaire = $resulat->fetch(PDO::FETCH_ASSOC);
     $bete = new Bestiarium($bestiaire['name'], $bestiaire['hp'], $bestiaire['damage']);
     $bete->setDescription($bestiaire['description']);
-    echo $bete;
+    echo json_encode ($bete->toArray());
 }
 
 if ($path == "/bestiarium/create") {

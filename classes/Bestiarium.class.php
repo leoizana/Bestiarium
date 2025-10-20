@@ -26,14 +26,20 @@ class Bestiarium{
 
     public function __toString() : string{
         return
-        "Nom de la bête : " . $this->name . 
-        "\nPoints de vie : " . $this->hp . 
-        "\nDégâts : " . $this->damage .
-        "\nDescription : " . $this->description .
-        "\n"
-       
+        "Name : " . $this->name . 
+        "Hp : " . $this->hp . 
+        "Damage : " . $this->damage .
+        "Description : " . $this->description
         ;
 
+    }
+    public function toArray(): array {
+        return [
+            'name' => $this->name,
+            'hp' => $this->hp,
+            'damage' => $this->damage,
+            'description' => $this->description,
+        ];
     }
 
     // Getters et Setters
