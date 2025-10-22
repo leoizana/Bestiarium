@@ -1,6 +1,6 @@
 <?php
 ///////////////////// Récupération des bêtes
-if ($path == "/bestiarium/viewall") {
+if ($path == "/bestiarium") {
     $resultat = $connexion->query("SELECT * FROM bestiarium");
     $bestiaires = $resultat->fetchAll(PDO::FETCH_ASSOC);
     foreach ($bestiaires as $bestiaire) {
@@ -12,12 +12,23 @@ if ($path == "/bestiarium/viewall") {
 }
 
 ///////////////////// Récupération d'une bête via son ID
-if ($path == "/bestiarium/view") {
-    $resulat = $connexion->query("SELECT * FROM bestiarium WHERE id=" . $_GET['id']);
-    $bestiaire = $resulat->fetch(PDO::FETCH_ASSOC);
+if (preg_match('#^/bestiarium/(\d+)$#', $path, $matches)) {
+    $id = (int)$matches[1];
+
+    $stmt = $connexion->prepare("SELECT * FROM bestiarium WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $bestiaire = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$bestiaire) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Bête non trouvée']);
+        return;
+    }
+
     $bete = new Bestiarium($bestiaire['name'], $bestiaire['hp'], $bestiaire['damage']);
     $bete->setDescription($bestiaire['description']);
-    echo json_encode ($bete->toArray());
+    echo json_encode($bete->toArray());
+    return;
 }
 
 if ($path == "/bestiarium/create") {
