@@ -1,4 +1,8 @@
 <?php
+
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
 ///////////////////// Récupération des bêtes
 if ($path == "/bestiarium") {
     $resultat = $connexion->query("SELECT * FROM bestiarium");
@@ -32,41 +36,53 @@ if (preg_match('#^/bestiarium/(\d+)$#', $path, $matches)) {
 }
 
 if ($path == "/bestiarium/create") {
-    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-    $contentType = $_SERVER['CONTENT_TYPE'] ?? ($_SERVER['HTTP_CONTENT_TYPE'] ?? '');
-    $data = [];
-    if ($method === 'POST') {
-        if (stripos($contentType, 'application/json') !== false) {
-            $raw = file_get_contents('php://input');
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                $data = $decoded;
-            }
-        } else {
-            $data = $_POST; 
-        }
-    } else {
-        $data = $_GET; 
-    }
+    header('Content-Type: application/json; charset=utf-8');
 
-    $name = $data['name'] ?? $data['Name'] ?? null;
-    $hp = $data['hp'] ?? $data['Hp'] ?? null;
-    $damage = $data['damage'] ?? $data['Damage'] ?? null;
-    $description = $data['description'] ?? $data['Description'] ?? null;
-
-    if ($name === null || $hp === null || $damage === null) {
-        http_response_code(400);
-        echo "Paramètres manquants.";
+    // Verifie si user existant
+    $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (!str_starts_with($auth, 'Bearer ')) {
+        http_response_code(401);
+        echo json_encode(["error" => "Token manquant"]);
         return;
     }
-    $stmt = $connexion->prepare(
-        "INSERT INTO bestiarium (name, hp, damage, description) VALUES (:name, :hp, :damage, :description)"
-    );
+
+    $token = substr($auth, 7);
+    try {
+        $decoded = JWT::decode($token, new Key(SECRET_KEY, 'HS256'));
+        $userId = $decoded->user_id ?? null;
+    } catch (Throwable $e) {
+        http_response_code(401);
+        echo json_encode(["error" => "Token invalide"]);
+        return;
+    }
+
+ // Recpu
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $name = $data['name'] ?? null;
+    $hp = $data['hp'] ?? null;
+    $damage = $data['damage'] ?? null;
+    $description = $data['description'] ?? '';
+
+    if (!$name || !$hp || !$damage) {
+        http_response_code(400);
+        echo json_encode(["error" => "Paramètres manquants"]);
+        return;
+    }
+
+    // SQL
+    $stmt = $connexion->prepare("
+        INSERT INTO bestiarium (user_id, name, hp, damage, description)
+        VALUES (:user_id, :name, :hp, :damage, :description)
+    ");
     $stmt->execute([
+        ':user_id' => $userId,
         ':name' => $name,
         ':hp' => $hp,
         ':damage' => $damage,
-        ':description' => $description,
+        ':description' => $description
     ]);
+
+    echo json_encode(["success" => true, "message" => "Créé", "id" => $connexion->lastInsertId()]);
 }
+
 

@@ -2,6 +2,9 @@
 spl_autoload_register(function ($classe){
     include "classes/" . $classe . ".class.php";
 });
+require_once __DIR__ . '/vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 require("BD/connect.php");
 $dsn="mysql:dbname=".BASE.";host=".SERVER.":3307";
     try{
