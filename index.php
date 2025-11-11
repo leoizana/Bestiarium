@@ -3,8 +3,7 @@ spl_autoload_register(function ($classe){
     include "classes/" . $classe . ".class.php";
 });
 require_once __DIR__ . '/vendor/autoload.php';
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+
 require("BD/connect.php");
 $dsn="mysql:dbname=".BASE.";host=".SERVER.":3307";
     try{
@@ -15,6 +14,34 @@ $dsn="mysql:dbname=".BASE.";host=".SERVER.":3307";
       printf("Échec de la connexion : %s\n", $e->getMessage());
       exit();
     }
+function getBearerToken(): ?string
+{
+    $auth = null;
+
+    if (function_exists('getallheaders')) {
+        foreach (getallheaders() as $k => $v) {
+            if (strcasecmp($k, 'Authorization') === 0) {
+                $auth = $v;
+                break;
+            }
+        }
+    }
+
+    if ($auth === null && !empty($_SERVER['HTTP_AUTHORIZATION'])) {
+        $auth = $_SERVER['HTTP_AUTHORIZATION'];
+    }
+
+    if ($auth === null && !empty($_SERVER['Authorization'])) {
+        $auth = $_SERVER['Authorization'];
+    }
+
+    if (!$auth || stripos($auth, 'Bearer ') !== 0) {
+        return null;
+    }
+
+    return trim(substr($auth, 7));
+}
+
 
 // parse_url() analyse une URL et retourne ses composants
 $parsed_url = parse_url($_SERVER['REQUEST_URI']);

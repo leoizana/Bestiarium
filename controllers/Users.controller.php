@@ -2,7 +2,6 @@
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-
 if ($path == "/user/create") {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $contentType = $_SERVER['CONTENT_TYPE'] ?? ($_SERVER['HTTP_CONTENT_TYPE'] ?? '');
@@ -10,7 +9,7 @@ if ($path == "/user/create") {
 
     if ($method === 'POST') {
         if (stripos($contentType, 'application/json') !== false) {
-            $raw = file_get_contents('php://input'); // <= corrigé
+            $raw = file_get_contents('php://input');
             $decoded = json_decode($raw, true);
             if (is_array($decoded)) {
                 $data = $decoded;
@@ -45,6 +44,7 @@ if ($path == "/user/create") {
 
     echo json_encode(["success" => true, "message" => "Utilisateur créer"]);
 }
+
 if ($path == "/user/login") {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $contentType = $_SERVER['CONTENT_TYPE'] ?? ($_SERVER['HTTP_CONTENT_TYPE'] ?? '');
@@ -67,12 +67,11 @@ if ($path == "/user/login") {
 
     if ($user && password_verify($password, $user['password'])) {
         $payload = [
-            'iat' => time(),           // quand il s'est connecté
-            'exp' => time() + 3600,    // expiration dans 1h
+            'iat' => time(),
+            'exp' => time() + 3600,
             'user_id' => $user['id'],
             'username' => $user['username']
         ];
-
 
         $jwt = JWT::encode($payload, SECRET_KEY , 'HS256');
 
@@ -86,12 +85,12 @@ if ($path == "/user/login") {
         echo json_encode(["error" => "Echec de la connexion"]);
     }
 }
+
 if ($path == "/user/logout") {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(204);
     return;
 }
-
 
 if ($path == "/user/me") {
     header('Content-Type: application/json; charset=utf-8');
@@ -106,28 +105,15 @@ if ($path == "/user/me") {
         'exp' => null,
         'now' => time(),
         'dt' => null,
-        'secret_fp' => substr(hash('sha256', (string)SECRET_KEY), 0, 12), 
+        'secret_fp' => substr(hash('sha256', (string)SECRET_KEY), 0, 12),
         'decode_error' => null,
         'decode_error_class' => null,
     ];
 
-    $auth = null;
-    if (function_exists('getallheaders')) {
-        foreach (getallheaders() as $k => $v) {
-            if (strcasecmp($k, 'Authorization') === 0) { $auth = $v; break; }
-        }
-    }
-    if ($auth === null && function_exists('apache_request_headers')) {
-        foreach (apache_request_headers() as $k => $v) {
-            if (strcasecmp($k, 'Authorization') === 0) { $auth = $v; break; }
-        }
-    }
-    if ($auth === null && !empty($_SERVER['HTTP_AUTHORIZATION'])) $auth = $_SERVER['HTTP_AUTHORIZATION'];
-    if ($auth === null && !empty($_SERVER['Authorization']))       $auth = $_SERVER['Authorization'];
+    $token = getBearerToken();
+    $diag['has_auth'] = $token !== null;
 
-    $diag['has_auth'] = (bool)$auth;
-
-    if (!$auth || stripos($auth, 'Bearer ') !== 0) {
+    if (!$token) {
         if ($debug) {
             http_response_code(401);
             $diag['step'] = 'missing_bearer';
@@ -139,7 +125,6 @@ if ($path == "/user/me") {
         return;
     }
 
-    $token = trim(substr($auth, 7));
     $diag['has_bearer'] = true;
 
     $parts = explode('.', $token);
@@ -195,7 +180,6 @@ if ($path == "/user/me") {
         $decoded = JWT::decode($token, new Key((string)SECRET_KEY, 'HS256'));
         $claims = (array)$decoded;
 
-        // OK
         echo json_encode([
             'user' => $claims['user_id'] ?? null,
             'username' => $claims['username'] ?? null,
@@ -215,5 +199,3 @@ if ($path == "/user/me") {
     }
     return;
 }
-
-

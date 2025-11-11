@@ -37,32 +37,14 @@ if (preg_match('#^/bestiarium/(\d+)$#', $path, $matches)) {
 if ($path === "/bestiarium/create") {
     header('Content-Type: application/json; charset=utf-8');
 
-    // --- Récupération du header Authorization ---
-    $auth = null;
-    if (function_exists('getallheaders')) {
-        foreach (getallheaders() as $k => $v) {
-            if (strcasecmp($k, 'Authorization') === 0) { $auth = $v; break; }
-        }
-    }
-    if ($auth === null && function_exists('apache_request_headers')) {
-        foreach (apache_request_headers() as $k => $v) {
-            if (strcasecmp($k, 'Authorization') === 0) { $auth = $v; break; }
-        }
-    }
-    if ($auth === null && !empty($_SERVER['HTTP_AUTHORIZATION'])) {
-        $auth = $_SERVER['HTTP_AUTHORIZATION'];
-    }
-    if ($auth === null && !empty($_SERVER['Authorization'])) {
-        $auth = $_SERVER['Authorization'];
-    }
-
-    if (!$auth || stripos($auth, 'Bearer ') !== 0) {
+    // 1. Récupération + décodage du token
+    $token = getBearerToken();
+    if (!$token) {
         http_response_code(401);
         echo json_encode(["error" => "Token manquant"]);
         return;
     }
 
-    $token = trim(substr($auth, 7));
     try {
         $decoded = JWT::decode($token, new Key(SECRET_KEY, 'HS256'));
         $userId = $decoded->user_id ?? null;
@@ -78,16 +60,16 @@ if ($path === "/bestiarium/create") {
         return;
     }
 
-    // --- Vérifier que l'utilisateur existe ---
-    $stmtUser = $connexion->prepare("SELECT id FROM user WHERE id = :id");
-    $stmtUser->execute([':id' => $userId]);
-    if (!$stmtUser->fetch(PDO::FETCH_ASSOC)) {
+    // 2. Vérifier que l'utilisateur existe
+    $stmt = $connexion->prepare("SELECT id FROM user WHERE id = :id");
+    $stmt->execute([':id' => $userId]);
+    if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
         http_response_code(401);
         echo json_encode(["error" => "Utilisateur introuvable"]);
         return;
     }
 
-    // --- Récupération des données JSON ---
+    // 3. Récupération des données
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
 
     $name        = $data['name'] ?? null;
@@ -101,20 +83,21 @@ if ($path === "/bestiarium/create") {
         return;
     }
 
-    // --- INSERT : placeholders nommés + bindValue explicite ---
+    // 4. INSERT
     $sql = "INSERT INTO bestiarium (id_user, name, hp, damage, description)
             VALUES (:id_user, :name, :hp, :damage, :description)";
 
-    $stmtInsert = $connexion->prepare($sql);
+    $stmt = $connexion->prepare($sql);
+    $ok = $stmt->execute([
+        ':id_user'     => $userId,
+        ':name'        => $name,
+        ':hp'          => (int)$hp,
+        ':damage'      => (int)$damage,
+        ':description' => $description,
+    ]);
 
-    $stmtInsert->bindValue(':id_user', $userId,      PDO::PARAM_INT);
-    $stmtInsert->bindValue(':name',    $name,        PDO::PARAM_STR);
-    $stmtInsert->bindValue(':hp',      (int)$hp,     PDO::PARAM_INT);
-    $stmtInsert->bindValue(':damage',  (int)$damage, PDO::PARAM_INT);
-    $stmtInsert->bindValue(':description', $description, PDO::PARAM_STR);
-
-    if (!$stmtInsert->execute()) {
-        $errorInfo = $stmtInsert->errorInfo();
+    if (!$ok) {
+        $errorInfo = $stmt->errorInfo();
         http_response_code(500);
         echo json_encode(["error" => $errorInfo[2] ?? "Erreur SQL"]);
         return;
