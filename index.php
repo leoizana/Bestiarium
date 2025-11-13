@@ -56,3 +56,6 @@ if (strpos($path, '/bestiarium') === 0) {
 if (strpos($path, '/user') === 0) {
     require_once($_SERVER["DOCUMENT_ROOT"].'/controllers/Users.controller.php');
 }
+if (strpos($path, '/matchs') === 0) {
+    require_once($_SERVER["DOCUMENT_ROOT"].'/controllers/Matchs.controller.php');
+}

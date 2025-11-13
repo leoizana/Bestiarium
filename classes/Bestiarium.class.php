@@ -1,72 +1,90 @@
 <?php
-class Bestiarium{
-    // Propriétés
+class Bestiarium {
     private string $name;
     private int $hp;
-
     private int $damage;
-
-    private string $races;
-
-    private string $description;
-    private string $images;
-
+    private int $defense;
     private int $heads;
+    private string $description;
+    private string $image;
 
-
-
-    // Constructeur
-
-    public function __construct(string $name, int $hp, int $damage){
+    public function __construct(string $name, string $image) {
         $this->name = $name;
-        $this->hp = $hp;
-        $this->damage = $damage;
-        
+        $this->image = $image;
     }
 
-    public function __toString() : string{
+    public function __toString(): string {
         return
-        "Name : " . $this->name . 
-        "Hp : " . $this->hp . 
-        "Damage : " . $this->damage .
-        "Description : " . $this->description
-        ;
-
+        "Name : " . $this->name .
+        " | Image : " . $this->image .
+        " | Description : " . $this->description;
     }
+
     public function toArray(): array {
         return [
             'name' => $this->name,
             'hp' => $this->hp,
             'damage' => $this->damage,
+            'defense' => $this->defense,
+            'heads' => $this->heads,
             'description' => $this->description,
+            'image' => $this->image,
         ];
     }
 
-    // Getters et Setters
-    public function getName(): string{
+    public function getName(): string {
         return $this->name;
     }
-    public function setName(string $name): void{
+
+    public function setName(string $name): void {
         $this->name = $name;
-    }   
-    public function getHp(): int{
+    }
+
+    public function getHp(): int {
         return $this->hp;
     }
-    public function setHp(int $hp): void{
+
+    public function setHp(int $hp): void {
         $this->hp = $hp;
     }
-    public function getDamage(): int{ 
+
+    public function getDamage(): int {
         return $this->damage;
     }
-    public function setDamage(int $damage): void{
+
+    public function setDamage(int $damage): void {
         $this->damage = $damage;
     }
-    public function getDescription(): string{
+
+    public function getDefense(): int {
+        return $this->defense;
+    }
+
+    public function setDefense(int $defense): void {
+        $this->defense = $defense;
+    }
+
+    public function getHeads(): int {
+        return $this->heads;
+    }
+
+    public function setHeads(int $heads): void {
+        $this->heads = $heads;
+    }
+
+    public function getDescription(): string {
         return $this->description;
     }
-    public function setDescription(string $description): void{
+
+    public function setDescription(string $description): void {
         $this->description = $description;
     }
 
+    public function getImage(): string {
+        return $this->image;
+    }
 
+    public function setImage(string $image): void {
+        $this->image = $image;
+    }
 }
