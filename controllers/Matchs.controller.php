@@ -9,7 +9,7 @@ if ($path == "/matchs") {
             c.id, c.creature_1, c.creature_2, c.result, c.created_at,
             b1.name AS c1_name, u1.id AS u1_id, u1.username AS u1_username,
             b2.name AS c2_name, u2.id AS u2_id, u2.username AS u2_username
-        FROM combat c
+        FROM fight c
         JOIN bestiarium b1 ON b1.id = c.creature_1
         JOIN user u1       ON u1.id = b1.id_user
         JOIN bestiarium b2 ON b2.id = c.creature_2
@@ -64,7 +64,7 @@ if (preg_match('#^/matchs/(\d+)$#', $path, $m)) {
             c.id, c.creature_1, c.creature_2, c.result, c.created_at,
             b1.name AS c1_name, u1.id AS u1_id, u1.username AS u1_username,
             b2.name AS c2_name, u2.id AS u2_id, u2.username AS u2_username
-        FROM combat c
+        FROM fight c
         JOIN bestiarium b1 ON b1.id = c.creature_1
         JOIN user u1       ON u1.id = b1.id_user
         JOIN bestiarium b2 ON b2.id = c.creature_2
@@ -115,7 +115,7 @@ if (preg_match('#^/matchs/delete/(\d+)$#', $path, $m)) {
     header('Content-Type: application/json; charset=utf-8');
     $id = (int)$m[1];
     $sql = "
-        DELETE FROM combat WHERE id = :id";
+        DELETE FROM fight WHERE id = :id";
     $stmt = $connexion->prepare($sql);
     $stmt->execute([':id' => $id]);
     $r = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -182,7 +182,7 @@ if ($path === "/matchs/create") {
 
     $result = $winner === 0 ? 'draw' : ($winner === $A['id'] ? 'creature_1' : 'creature_2');
 
-    $sql = "INSERT INTO combat (user_id, creature_1, creature_2, result, created_at) VALUES (:user_id, :c1, :c2, :result, NOW())";
+    $sql = "INSERT INTO fight (user_id, creature_1, creature_2, result, created_at) VALUES (:user_id, :c1, :c2, :result, NOW())";
     $stmt = $connexion->prepare($sql);
     $ok = $stmt->execute([
         ':user_id' => $userId,
