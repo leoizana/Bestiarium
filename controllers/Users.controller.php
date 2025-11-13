@@ -2,6 +2,51 @@
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
+if ($path == "/user") {
+    $resultat = $connexion->query("SELECT * FROM user");
+    $users = $resultat->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($users as $us) {
+        $user = new User($us['username'], $us['email']);
+        echo json_encode($user->toArray());
+    }
+}
+if (preg_match('#^/user/(\d+)$#', $path, $matches)) {
+    $id = (int)$matches[1];
+
+    $stmt = $connexion->prepare("SELECT * FROM user WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Bête non trouvée']);
+        return;
+    }
+
+    $us = new User($user['username'], $user['email']);
+    echo json_encode($us->toArray());
+    return;
+}
+if (preg_match('#^/user/delete/(\d+)$#', $path, $matches)) {
+    $id = (int)$matches[1];
+
+    $stmt = $connexion->prepare("SELECT * FROM user WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Bête non trouvée']);
+        return;
+    }
+
+    $stmt = $connexion->prepare("DELETE FROM user WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'message' => 'Utilisateur supprimé']);
+    return;
+}
+
 if ($path == "/user/create") {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $contentType = $_SERVER['CONTENT_TYPE'] ?? ($_SERVER['HTTP_CONTENT_TYPE'] ?? '');

@@ -18,6 +18,24 @@ if ($path == "/bestiarium") {
     }
 }
 
+if (preg_match('#^/bestiarium/delete/(\d+)$#', $path, $matches)) {
+    $id = (int)$matches[1];
+    $stmt = $connexion->prepare("SELECT * FROM bestiarium WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $bestiaire = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$bestiaire) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Bête non trouvée']);
+        return;
+    }
+    $stmt = $connexion->prepare("DELETE FROM bestiarium WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $bestiaire = $stmt->fetch(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'message' => 'Bête supprimée']);
+    return;
+}
+
+
 if (preg_match('#^/bestiarium/(\d+)$#', $path, $matches)) {
     $id = (int)$matches[1];
 

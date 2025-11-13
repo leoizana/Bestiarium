@@ -4,10 +4,15 @@ class User{
     private string $password;
     private string $email;
 
-    public function __construct(string $username, string $password, string $email){
+    public function __construct(string $username, string $email){
         $this->username = $username;
-        $this->password = $password;
         $this->email = $email;
+    }
+    public function toArray(): array {
+        return [
+            'email' => $this->email,
+            'username' => $this->username,
+        ];
     }
 
     public function getUsername(): string{

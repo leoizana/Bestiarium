@@ -111,6 +111,18 @@ if (preg_match('#^/matchs/(\d+)$#', $path, $m)) {
     return;
 }
 
+if (preg_match('#^/matchs/delete/(\d+)$#', $path, $m)) {
+    header('Content-Type: application/json; charset=utf-8');
+    $id = (int)$m[1];
+    $sql = "
+        DELETE FROM combat WHERE id = :id";
+    $stmt = $connexion->prepare($sql);
+    $stmt->execute([':id' => $id]);
+    $r = $stmt->fetch(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'message' => 'Match supprimé']);
+    return;
+}
+
 if ($path === "/matchs/create") {
     header('Content-Type: application/json; charset=utf-8');
 
